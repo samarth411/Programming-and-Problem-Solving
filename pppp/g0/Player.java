@@ -44,7 +44,7 @@ public class Player implements pppp.sim.Player {
 		return Math.sqrt(x * x + y * y);
 	}
 
-	private Point[] nearest_neighbor(int piper_no, Point[][] pipers)
+	private Point[] nearest_neighbor(Point[][] pipers)
 	{
 		//keeps track of which pipers still need a nearest neighbor assignment
 		Point neighbors = new Point[pipers[id].length];
@@ -158,13 +158,28 @@ public class Player implements pppp.sim.Player {
 		}
 	}
 
+
 	// return next locations on last argument
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
 	{
+		boolean pipers_clustered = pipers_together(.1,pipers);
+		Point[] next;
+		if(!pipers_clustered)
+		 {
+		 	next = nearest_neighbor(pipers);
+		 }
+		 else
+		 {
+		 	next = null;
+		 }
 		for (int p = 0 ; p != pipers[id].length ; ++p) {
 			Point src = pipers[id][p];
 			Point dst = pos[p][pos_index[p]];
+			if(!pipers_clustered)
+			{
+				dst = next[p];
+			}
 			// if null then get random position
 			if (dst == null) dst = random_pos[p];
 			// if position is reached
