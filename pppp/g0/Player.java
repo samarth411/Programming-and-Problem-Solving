@@ -176,7 +176,7 @@ public class Player implements pppp.sim.Player {
 		for (int p = 0 ; p != pipers[id].length ; ++p) {
 			Point src = pipers[id][p];
 			Point dst = pos[p][pos_index[p]];
-			if(!pipers_clustered)
+			if(pos_index[p]>1 && !pipers_clustered)
 			{
 				dst = next[p];
 			}
