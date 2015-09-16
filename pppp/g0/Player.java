@@ -4,6 +4,7 @@ import pppp.sim.Point;
 import pppp.sim.Move;
 
 import java.util.*;
+import java.util.Random;
 
 public class Player implements pppp.sim.Player {
 
@@ -14,6 +15,7 @@ public class Player implements pppp.sim.Player {
 	private Point[][] pos = null;
 	private Point[] random_pos = null;
 	private Random gen = new Random();
+	private int largest_ind = 0;
 
 	// create move towards specified destination
 	private static Move move(Point src, Point dst, boolean play)
@@ -36,18 +38,18 @@ public class Player implements pppp.sim.Player {
 		if (neg_y) y = -y;
 		return swap_xy ? new Point(y, x) : new Point(x, y);
 	}
-
+	
 	private static double distance(Point a, Point b)
 	{
 		double x = a.x-b.x;
 		double y = a.y-b.y;
 		return Math.sqrt(x * x + y * y);
 	}
-
+	
 	private Point[] nearest_neighbor(Point[][] pipers)
 	{
 		//keeps track of which pipers still need a nearest neighbor assignment
-		Point neighbors = new Point[pipers[id].length];
+		Point[] neighbors = new Point[pipers[id].length];
 		HashSet<Integer> pipers_remaining = new HashSet<Integer>();
 		for(int i=0; i<pipers[id].length; ++i)
 		{
@@ -128,6 +130,12 @@ public class Player implements pppp.sim.Player {
 		}
 		return true;
 	}
+	
+	
+	
+	
+	
+	
 
 	// specify location that the player will alternate between
 	public void init(int id, int side, long turns,
@@ -139,6 +147,52 @@ public class Player implements pppp.sim.Player {
 		pos = new Point [n_pipers][5];
 		random_pos = new Point [n_pipers];
 		pos_index = new int [n_pipers];
+		
+		
+		float center = 0;
+		float left = -side * 2 / 5;
+		float bottom = left;
+		float right = side * 2 / 5;
+		float top = right;
+		float ratio[] = new float[4];
+		int rats_per[] = new int[4];
+		int pipers_per[] = new int[4];
+		for (int i=0; i<4; i++)
+		{
+		rats_per[i] = 0;
+		pipers_per[i] = 0;
+		}
+		for (int i=0; i<rats.length; i++)
+		{
+		if((rats[i].x <= center && rats[i].x > left) && (rats[i].y >= center && rats[i].y < top)) rats_per[0]++;
+		if((rats[i].x >= center && rats[i].x < right) && (rats[i].y >= center && rats[i].y < top)) rats_per[1]++;
+		if((rats[i].x >= center && rats[i].x < right) && (rats[i].y <= center && rats[i].y > bottom)) rats_per[2]++;
+		if((rats[i].x <= center && rats[i].x > left) && (rats[i].y <= center && rats[i].y > bottom)) rats_per[3]++;
+		}
+		for (int i=0; i<pipers[id].length; i++)
+		{
+		if((pipers[id][i].x <= center && pipers[id][i].x > left) && (pipers[id][i].y <= center && pipers[id][i].y > top)) pipers_per[0]++;
+		if((pipers[id][i].x <= center && pipers[id][i].x > left) && (pipers[id][i].y >= center && pipers[id][i].y < bottom)) pipers_per[2]++;
+		if((pipers[id][i].x >= center && pipers[id][i].x < right) && (pipers[id][i].y <= center && pipers[id][i].y > top)) pipers_per[1]++;
+		if((pipers[id][i].x >= center && pipers[id][i].x < right) && (pipers[id][i].y >= center && pipers[id][i].y < bottom)) pipers_per[3]++;
+		}
+		for (int i=0; i<4; i++)
+			{
+			// handle cases where there are no pipers in the little square
+			if (pipers_per[i] != 0)
+				ratio[i] = rats_per[i] / pipers_per[i];
+			else
+			{
+				if (rats_per[i] == 0) ratio[i] = 0;
+				else
+					ratio[i] = rats_per[i] + 1;
+			}
+			}
+		float largest_ratio = ratio[0];
+		for(int i=1; i<4; i++)
+			if (largest_ratio < ratio[i])
+				largest_ind = i;
+		
 		for (int p = 0 ; p != n_pipers ; ++p) {
 			// spread out at the door level
 			double door = 0.0;
@@ -158,11 +212,64 @@ public class Player implements pppp.sim.Player {
 		}
 	}
 
-
 	// return next locations on last argument
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
 	{
+		/////////////////////////////////////// Manyi Start/////////////////////////////////////////		
+		/////// -- Start -- Calcualte rats vs pipers ratio  ////////
+		float center = 0;
+		float left = -side * 2 / 5;
+		float bottom = left;
+		float right = side * 2 / 5;
+		float top = right;
+		float ratio[] = new float[4];
+		int rats_per[] = new int[4];
+		int pipers_per[] = new int[4];
+		for (int i=0; i<4; i++)
+		{
+		rats_per[i] = 0;
+		pipers_per[i] = 0;
+		}
+		for (int i=0; i<rats.length; i++)
+		{
+		if((rats[i].x <= center && rats[i].x > left) && (rats[i].y >= center && rats[i].y < top)) rats_per[0]++;
+		if((rats[i].x >= center && rats[i].x < right) && (rats[i].y >= center && rats[i].y < top)) rats_per[1]++;
+		if((rats[i].x >= center && rats[i].x < right) && (rats[i].y <= center && rats[i].y > bottom)) rats_per[2]++;
+		if((rats[i].x <= center && rats[i].x > left) && (rats[i].y <= center && rats[i].y > bottom)) rats_per[3]++;
+		}
+		for (int i=0; i<pipers[id].length; i++)
+		{
+		if((pipers[id][i].x <= center && pipers[id][i].x > left) && (pipers[id][i].y <= center && pipers[id][i].y > top)) pipers_per[0]++;
+		if((pipers[id][i].x <= center && pipers[id][i].x > left) && (pipers[id][i].y >= center && pipers[id][i].y < bottom)) pipers_per[2]++;
+		if((pipers[id][i].x >= center && pipers[id][i].x < right) && (pipers[id][i].y <= center && pipers[id][i].y > top)) pipers_per[1]++;
+		if((pipers[id][i].x >= center && pipers[id][i].x < right) && (pipers[id][i].y >= center && pipers[id][i].y < bottom)) pipers_per[3]++;
+		}
+		for (int i=0; i<4; i++)
+			{
+			// handle cases where there are no pipers in the little square
+			if (pipers_per[i] != 0)
+				ratio[i] = rats_per[i] / pipers_per[i];
+			else
+			{
+				if (rats_per[i] == 0) ratio[i] = 0;
+				else
+					ratio[i] = rats_per[i] + 1;
+			}
+			}
+		/////// -- End -- Calcualte rats vs pipers ratio ////////
+		/////// -- Start -- Move towards the little square with the largest ratio ////////
+		int largest_ind_temp = 0;
+		float largest_ratio = ratio[0];
+		for(int i=1; i<4; i++)
+			if (largest_ratio < ratio[i])
+				largest_ind_temp = i;
+		
+		
+		
+		/////////////////////////////////////// Manyi End/////////////////////////////////////////	
+		
+		/////////////////////////////////////// Diana Start////////////////////////////////////////////
 		boolean pipers_clustered = pipers_together(.1,pipers);
 		Point[] next;
 		if(!pipers_clustered)
@@ -173,13 +280,49 @@ public class Player implements pppp.sim.Player {
 		 {
 		 	next = null;
 		 }
+		//////////////////////////////////////// Diana End///////////////////////////////////////////////
+		
 		for (int p = 0 ; p != pipers[id].length ; ++p) {
 			Point src = pipers[id][p];
 			Point dst = pos[p][pos_index[p]];
+			/////////////////////////////////////// Manyi Start/////////////////////////////////////////	
+			if (largest_ind_temp != largest_ind)
+			{
+				Random random = new Random();
+				if (largest_ind == 0)
+				{
+					double xx = random.nextDouble();
+					Point temp = new Point(-random.nextDouble() * .4 * side, random.nextDouble() * .4 * side);
+					pos[p][1] = temp;
+				}
+				if (largest_ind == 1)
+				{
+					double xx = random.nextDouble();
+					Point temp = new Point(random.nextDouble() * .4 * side, random.nextDouble() * .4 * side);
+					pos[p][1] = temp;
+				}
+				if (largest_ind == 2)
+				{
+					double xx = random.nextDouble();
+					Point temp = new Point(random.nextDouble() * .4 * side, -random.nextDouble() * .4 * side);
+					pos[p][1] = temp;
+				}
+				if (largest_ind == 3)
+				{
+					double xx = random.nextDouble();
+					Point temp = new Point(-random.nextDouble() * .4 * side, -random.nextDouble() * .4 * side);
+					pos[p][1] = temp;
+				}
+			}
+			/////////////////////////////////////// Manyi End/////////////////////////////////////////	
+			/*
+			//////////////////////////////////////// Diana Start ///////////////////////////////////////////////			
 			if(pos_index[p]>1 && !pipers_clustered)
 			{
 				dst = next[p];
 			}
+			//////////////////////////////////////// Diana End ///////////////////////////////////////////////
+			*/
 			// if null then get random position
 			if (dst == null) dst = random_pos[p];
 			// if position is reached
