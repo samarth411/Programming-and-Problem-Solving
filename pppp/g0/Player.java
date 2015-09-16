@@ -37,14 +37,14 @@ public class Player implements pppp.sim.Player {
 		return swap_xy ? new Point(y, x) : new Point(x, y);
 	}
 
-	private static int distance(Point a, Point b)
+	private static double distance(Point a, Point b)
 	{
 		double x = a.x-b.x;
 		double y = a.y-b.y;
 		return Math.sqrt(x * x + y * y);
 	}
 
-	private static Point[] nearest_neighbor(int piper_no, Point[][] pipers)
+	private Point[] nearest_neighbor(int piper_no, Point[][] pipers)
 	{
 		//keeps track of which pipers still need a nearest neighbor assignment
 		Point neighbors = new Point[pipers[id].length];
@@ -56,7 +56,7 @@ public class Player implements pppp.sim.Player {
 
 		for(int i=0; i<pipers[id].length; ++i)
 		{
-			if(!pipers_remaining.contians(i))
+			if(!pipers_remaining.contains(i))
 			{
 				continue;
 			}
@@ -67,7 +67,7 @@ public class Player implements pppp.sim.Player {
 			
 			for(int j=0; j<pipers[id].length; j++)
 			{
-				if(!pipers_remaining.containts(i))
+				if(!pipers_remaining.contains(i))
 				{
 					continue;
 				}
@@ -100,21 +100,21 @@ public class Player implements pppp.sim.Player {
 
 				}
 			}
-			neighbors[i] = pipers[id][j];
-			neighbors[j] = pipers[id][i];
+			neighbors[i] = pipers[id][neighbor];
+			neighbors[neighbor] = pipers[id][i];
 			for(Integer k : companions)
 			{
-				neighbors[k] = pipers[id][j];
+				neighbors[k] = pipers[id][neighbor];
 			}
 			pipers_remaining.remove(i);
-			pipers_remaining.remove(j);
+			pipers_remaining.remove(neighbor);
 		}
 		return neighbors;
 	}
 
 	//return true if all pipers within a certain radius of eachother
 	//shoudl check before checking for nearest neighbors
-	private static boolean pipers_together(double radius, Point[][] pipers)
+	private boolean pipers_together(double radius, Point[][] pipers)
 	{
 		for (int i=0; i<pipers[id].length; ++i)
 		{
