@@ -48,9 +48,13 @@ public class Player implements pppp.sim.Player {
 	
 	private Point[] nearest_neighbor(Point[][] pipers)
 	{
+		double radius = 2.0; //radius at which pipers considered part of the same cluser
+							//EXPERIMENT with value
 		//keeps track of which pipers still need a nearest neighbor assignment
 		Point[] neighbors = new Point[pipers[id].length];
+		//keeps track of pipers which still need to be assigned a neighbor
 		HashSet<Integer> pipers_remaining = new HashSet<Integer>();
+		//add each piper to the hashset
 		for(int i=0; i<pipers[id].length; ++i)
 		{
 			pipers_remaining.add(i);
@@ -58,10 +62,12 @@ public class Player implements pppp.sim.Player {
 
 		for(int i=0; i<pipers[id].length; ++i)
 		{
+			//if pipers remaining doesn't contain the piper, then it has already been assigned a neighbor
 			if(!pipers_remaining.contains(i))
 			{
 				continue;
 			}
+			//keeps track of other pipers who are part of the same cluster
 			ArrayList<Integer> companions = new ArrayList<Integer>();
 
 			double min_dist = Double.MAX_VALUE;
@@ -73,15 +79,16 @@ public class Player implements pppp.sim.Player {
 				{
 					continue;
 				}
-				if (Math.abs(pipers[id][i].x - pipers[id][j].x) < 0.000001 &&
-			    Math.abs(pipers[id][i].y - pipers[id][j].y) < 0.000001)
+				//if another piper is in the viciinity of this piper, consider them 
+				//as part of the same cluster and send them to the same neighbor
+				double dist = distance(pipers[id][i], pipers[id][j]);
+				if (dist < radius)
 				{
 					companions.add(j);
-					pipers_remaining.remove(i);
+					pipers_remaining.remove(j);
 					continue;
 				}
-				double dist = distance(pipers[id][i], pipers[id][j]);
-				if(dist<min_dist)
+				else if(dist < min_dist)
 				{
 					min_dist = dist;
 					neighbor = j;
@@ -190,8 +197,12 @@ public class Player implements pppp.sim.Player {
 			}
 		float largest_ratio = ratio[0];
 		for(int i=1; i<4; i++)
+		{
 			if (largest_ratio < ratio[i])
+			{
 				largest_ind = i;
+			}
+		}
 		
 		for (int p = 0 ; p != n_pipers ; ++p) {
 			// spread out at the door level
@@ -270,7 +281,7 @@ public class Player implements pppp.sim.Player {
 		/////////////////////////////////////// Manyi End/////////////////////////////////////////	
 		
 		/////////////////////////////////////// Diana Start////////////////////////////////////////////
-		boolean pipers_clustered = pipers_together(.1,pipers);
+		boolean pipers_clustered = pipers_together(2,pipers);
 		Point[] next;
 		if(!pipers_clustered)
 		 {
@@ -315,14 +326,15 @@ public class Player implements pppp.sim.Player {
 				}
 			}
 			/////////////////////////////////////// Manyi End/////////////////////////////////////////	
-			/*
+			
 			//////////////////////////////////////// Diana Start ///////////////////////////////////////////////			
-			if(pos_index[p]>1 && !pipers_clustered)
+			//??????
+			if(!pipers_clustered)
 			{
-				dst = next[p];
+				pos[p][2] = next[p];
 			}
 			//////////////////////////////////////// Diana End ///////////////////////////////////////////////
-			*/
+			
 			// if null then get random position
 			if (dst == null) dst = random_pos[p];
 			// if position is reached
