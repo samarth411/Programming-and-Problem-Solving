@@ -14,6 +14,17 @@ public class Player implements pppp.sim.Player {
 	private Point[][] pos = null;
 	private Point[] random_pos = null;
 	private Random gen = new Random();
+	
+	
+	private int ratsCountInit = 0;
+	private int ratsCountCurrent = 0;
+	
+	
+	private int numberPasses = 0;
+	
+	
+	
+	
 
 	// create move towards specified destination
 	private static Move move(Point src, Point dst, boolean play)
@@ -63,6 +74,10 @@ public class Player implements pppp.sim.Player {
 	public void init(int id, int side, long turns,
 	                 Point[][] pipers, Point[] rats)
 	{
+		//Initialize total Rats
+		this.ratsCountInit = rats.length;
+		this.ratsCountCurrent = rats.length;
+		
 		this.id = id;
 		this.side = side;
 		int n_pipers = pipers[id].length;
@@ -73,21 +88,27 @@ public class Player implements pppp.sim.Player {
 			// spread out at the door level
 			double door = 0.0;
 			//if (n_pipers != 1) door = p * 1.8 / (n_pipers - 1) - 0.9;
-			
 			if (n_pipers != 1) door = -0.95;
-			
 			// pick coordinate based on where the player is
 			boolean neg_y = id == 2 || id == 3;
 			boolean swap  = id == 1 || id == 3;
 			// first and third position is at the door
 			pos[p][0] = pos[p][3] = point(door, side * 0.5, neg_y, swap);
-			
 			// Set the second position 
-			double xCoordinate = (p * 0.4 / (n_pipers - 1) - 0.2) * side;
-			double yCoordinate = -0.1*side;
+			double xCoordinate = 0.0;
+			double yCoordinate = 0.0;
 			
+			if (p == 3)
+			{
+				xCoordinate = 0.45*side;
+				yCoordinate = 0.35*side;
+			}
+			else
+			{
+				xCoordinate = (p * 0.4 / (n_pipers - 1) - 0.2) * side;
+				yCoordinate = -0.1*side;
+			}	
 			pos[p][1] = point(xCoordinate, yCoordinate, neg_y, swap);
-			
 			pos[p][2] = point(0, 0.40*side, neg_y, swap);
 			
 			// second position is chosen randomly in the rat moving area
@@ -103,64 +124,106 @@ public class Player implements pppp.sim.Player {
 	}
 	
 	
-    
-	// specify location that the player will alternate between
-		public void init2(int id, int side, long turns,
-		                 Point[][] pipers, Point[] rats)
+	private void decideGate(Point[] rats, int p)
+	{
+		boolean neg_y = id == 2 || id == 3;
+		boolean swap  = id == 1 || id == 3;
+		double xCoordinate = 0.0;
+		double yCoordinate = 0.0;
+		// Define point 1 coordinates
+		xCoordinate = -0.1*side;
+		yCoordinate = 0.25*side;
+		Point p1 = point(xCoordinate, yCoordinate, neg_y, swap);
+		// Define point 2 coordinates
+		xCoordinate = -0.4*side;
+		yCoordinate = -0.25*side;
+		Point p2 = point(xCoordinate, yCoordinate, neg_y, swap);
+		// Define point 1 coordinates
+		xCoordinate = 0.1*side;
+		yCoordinate = 0.25*side;
+		Point p3 = point(xCoordinate, yCoordinate, neg_y, swap);
+		// Define point 2 coordinates
+		xCoordinate = 0.4*side;
+		yCoordinate = -0.25*side;
+		Point p4 = point(xCoordinate, yCoordinate, neg_y, swap);
+		int count1 = 0;
+		int count2 = 0;
+	
+		for (int i=0; i<rats.length; i++)
 		{
-			this.id = id;
-			this.side = side;
-			int n_pipers = pipers[id].length;
-			pos = new Point [n_pipers][5];
-			random_pos = new Point [n_pipers];
-			pos_index = new int [n_pipers];
-			for (int p = 0 ; p != n_pipers ; ++p) {
-				// spread out at the door level
-				double door = 0.0;
-				if (n_pipers != 1) door = p * 1.8 / (n_pipers - 1) - 0.9;
-				// pick coordinate based on where the player is
-				boolean neg_y = id == 2 || id == 3;
-				boolean swap  = id == 1 || id == 3;
-				// first and third position is at the door
-				pos[p][0] = pos[p][2] = point(door, side * 0.5, neg_y, swap);
-				// second position is chosen randomly in the rat moving area
-				pos[p][1] = null;
-				// fourth and fifth positions are outside the rat moving area
-				pos[p][3] = point(door * -6, side * 0.5 + 3, neg_y, swap);
-				pos[p][4] = point(door * +6, side * 0.5 + 3, neg_y, swap);
-				// start with first position
-				pos_index[p] = 0;
+			if (rats[i].x < p1.x && rats[i].x > p2.x && rats[i].y < p1.y && rats[i].y > p2.y )
+			{
+				count1++;
+			}
+			if (rats[i].x > p3.x && rats[i].x < p4.x && rats[i].y < p3.y && rats[i].y > p4.y )
+			{
+				count2++;
+			}				
+		}
+		if (count1 > count2)
+		{
+			pos[p][pos_index[p]] = point(-0.4*side, 0, neg_y, swap);
+		}
+		else
+		{
+			pos[p][pos_index[p]] = point(0.4*side, 0, neg_y, swap);
+		}
+	}
+	
+	
+	private void waitAtGate(Point[] rats, int p)
+	{
+		int ratsInRange = 0;
+		for (int i=0; i<rats.length; i++)
+		{
+			if (getDistance(pos[p][pos_index[p]], rats[i]) < 10)
+			{
+				ratsInRange++;
 			}
 		}
+		if (ratsInRange < 3)
+		{
+			// Wait there only
+			pos_index[p] = 0;
+		}
+	}
 	
-	
-		
 		
 	// return next locations on last argument
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
 	{
+		if (numberPasses >= 4)
+		{
+			this.ratsCountCurrent = rats.length;
+			for (int p = 0 ; p != pipers[id].length ; ++p) {
+				if (pos_index[p] == 1)
+				{
+					// Set position at gate, Decide the gate 
+					// pick coordinate based on where the player is
+					decideGate(rats, p);
+				}
+			}
+		}
 		for (int p = 0 ; p != pipers[id].length ; ++p) {
 			Point src = pipers[id][p];
 			Point dst = pos[p][pos_index[p]];
-			
-			// if null then get random position
-			//if (dst == null) dst = random_pos[p];
 
 			// if position is reached
 			if (Math.abs(src.x - dst.x) < 0.000001 &&
 			    Math.abs(src.y - dst.y) < 0.000001) {
-				// discard random position
-				//if (dst == random_pos[p]) random_pos[p] = null;
+				// Piper has reached position 1 , Wait until he has got a certain number of rats
+				if (pos_index[p] == 1 && numberPasses >= 4)
+				{
+					waitAtGate(rats, p);
+				}
+				if (pos_index[p] == 3)
+				{
+					numberPasses++;
+				}
 				// get next position
 				if (++pos_index[p] == pos[p].length) pos_index[p] = 0;
 				dst = pos[p][pos_index[p]];
-				// generate a new position if random
-				/*if (dst == null) {
-					double x = (gen.nextDouble() - 0.5) * side * 0.9;
-					double y = (gen.nextDouble() - 0.5) * side * 0.9;
-					random_pos[p] = dst = new Point(x, y);
-				} */
 			}
 			// get move towards position
 			if (pos_index[p] == 3 || pos_index[p] == 2)
@@ -171,13 +234,13 @@ public class Player implements pppp.sim.Player {
 			{
 				moves[p] = move(src, dst, pos_index[p] > 1);
 			}
-			
 		}
+		
 	}
 
 	// This method is follows greedy approach : 
 	// The pipers go to the nearest rat , start playing the pipe and come back 
-	public void play2(Point[][] pipers, boolean[][] pipers_played,
+	/*public void play2(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
 	{	
 		
@@ -287,5 +350,5 @@ public class Player implements pppp.sim.Player {
 			moves[p] = move(src, dst, playPiper);
 			//moves[p] = move(src, dst, true);
 		}
-	}
+	} */
 }
