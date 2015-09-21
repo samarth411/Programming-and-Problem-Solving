@@ -255,12 +255,120 @@ public class Player implements pppp.sim.Player {
 		dist[15] = Math.sqrt(Math.pow(pipers[id][p].x-side*3/8, 2) + Math.pow(pipers[id][p].y+side*3/8, 2));
 		return dist;
 	}
+	private static double distance(Point a, Point b)
+	{
+		double x = a.x-b.x;
+		double y = a.y-b.y;
+		return Math.sqrt(x * x + y * y);
+	}
+	
+	private Point[] nearest_neighbor(Point[][] pipers)
+	{
+		double radius = 2.0; //radius at which pipers considered part of the same cluser
+							//EXPERIMENT with value
+		//keeps track of which pipers still need a nearest neighbor assignment
+		Point[] neighbors = new Point[pipers[id].length];
+		//keeps track of pipers which still need to be assigned a neighbor
+		HashSet<Integer> pipers_remaining = new HashSet<Integer>();
+		//add each piper to the hashset
+		for(int i=0; i<pipers[id].length; ++i)
+		{
+			pipers_remaining.add(i);
+		}
+
+		for(int i=0; i<pipers[id].length; ++i)
+		{
+			//if pipers remaining doesn't contain the piper, then it has already been assigned a neighbor
+			if(!pipers_remaining.contains(i))
+			{
+				continue;
+			}
+			//keeps track of other pipers who are part of the same cluster
+			ArrayList<Integer> companions = new ArrayList<Integer>();
+
+			double min_dist = Double.MAX_VALUE;
+			int neighbor = -1;
+			
+			for(int j=0; j<pipers[id].length; j++)
+			{
+				if(!pipers_remaining.contains(i))
+				{
+					continue;
+				}
+				//if another piper is in the viciinity of this piper, consider them 
+				//as part of the same cluster and send them to the same neighbor
+				double dist = distance(pipers[id][i], pipers[id][j]);
+				if (dist < radius)
+				{
+					companions.add(j);
+					pipers_remaining.remove(j);
+					continue;
+				}
+				else if(dist < min_dist)
+				{
+					min_dist = dist;
+					neighbor = j;
+				}
+
+			}
+			//if odd number of pipers, one left without a piar, just sent it to closest other piper
+			if(neighbor == -1)
+			{
+				for(int j=0; j<pipers[id].length; j++)
+				{
+					double dist = distance(pipers[id][i], pipers[id][j]);
+					if(dist<min_dist)
+					{
+						min_dist = dist;
+						neighbor = j;
+					}
+
+				}
+			}
+			neighbors[i] = pipers[id][neighbor];
+			neighbors[neighbor] = pipers[id][i];
+			for(Integer k : companions)
+			{
+				neighbors[k] = pipers[id][neighbor];
+			}
+			pipers_remaining.remove(i);
+			pipers_remaining.remove(neighbor);
+		}
+		return neighbors;
+	}
+
+	//return true if all pipers within a certain radius of eachother
+	//shoudl check before checking for nearest neighbors
+	private boolean pipers_together(double radius, Point[][] pipers)
+	{
+		for (int i=0; i<pipers[id].length; ++i)
+		{
+			for(int j=i; j<pipers[id].length; ++j)
+			{
+				if(distance(pipers[i][i], pipers[id][j])>radius)
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	
 		
 	// return next locations on last argument
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
 	{		
+		boolean pipers_clustered = pipers_together(2,pipers);
+		Point[] next;
+		if(!pipers_clustered)
+		 {
+		 	next = nearest_neighbor(pipers);
+		 }
+		 else
+		 {
+		 	next = null;
+		 }
 		if (numberPasses >= 4)
 		{
 			this.ratsCountCurrent = rats.length;
