@@ -347,70 +347,39 @@ public class Player implements pppp.sim.Player {
 	}
 	
 	
-	private int[] findNofRats(Point[] rats)
+	private int[] findNofRats(Point[] rats, int granularity)
 	{
-		int rats_per[] = new int[16];
-		double center = 0;
-		double left = -side / 2;
-		double bottom = left;
-		double right = side / 2;
-		double top = right;
-		for (int i=0; i<16; i++)
+		int rats_per[] = new int[granularity*granularity];
+		for (int i=0; i<granularity; i++)
 		{
 		rats_per[i] = 0;
 		}
 		for (int i=0; i<rats.length; i++)
 		{
-		if((rats[i].x <= -side/4 && rats[i].x > left) && (rats[i].y >= side/4 && rats[i].y < top)) rats_per[0]++;
-		if((rats[i].x >= -side/4 && rats[i].x <= center) && (rats[i].y >= side/4 && rats[i].y < top)) rats_per[1]++;
-		if((rats[i].x >= center && rats[i].x <= side/4) && (rats[i].y >= side/4 && rats[i].y < top)) rats_per[2]++;
-		if((rats[i].x >= side/4  && rats[i].x < right) && (rats[i].y >= side/4 && rats[i].y < top)) rats_per[3]++;
-		
-		if((rats[i].x <= -side/4 && rats[i].x > left) && (rats[i].y >= center && rats[i].y <= side/4)) rats_per[4]++;
-		if((rats[i].x >= -side/4 && rats[i].x <= center) && (rats[i].y >= center && rats[i].y <= side/4)) rats_per[5]++;
-		if((rats[i].x >= center && rats[i].x <= side/4) && (rats[i].y >= center && rats[i].y <= side/4)) rats_per[6]++;
-		if((rats[i].x >= side/4  && rats[i].x < right) && (rats[i].y >= center && rats[i].y <= side/4)) rats_per[7]++;
-
-		if((rats[i].x <= -side/4 && rats[i].x > left) && (rats[i].y >= -side/4 && rats[i].y <= center)) rats_per[8]++;
-		if((rats[i].x >= -side/4 && rats[i].x <= center) && (rats[i].y >= -side/4 && rats[i].y <= center)) rats_per[9]++;
-		if((rats[i].x >= center && rats[i].x <= side/4) && (rats[i].y >= -side/4 && rats[i].y <= center)) rats_per[10]++;
-		if((rats[i].x >= side/4  && rats[i].x < right) && (rats[i].y >= -side/4 && rats[i].y <= center)) rats_per[11]++;
-		
-		if((rats[i].x <= -side/4 && rats[i].x > left) && (rats[i].y > bottom && rats[i].y <= -side/4)) rats_per[12]++;
-		if((rats[i].x >= -side/4 && rats[i].x <= center) && (rats[i].y > bottom && rats[i].y <= -side/4)) rats_per[13]++;
-		if((rats[i].x >= center && rats[i].x <= side/4) && (rats[i].y > bottom && rats[i].y <= -side/4)) rats_per[14]++;
-		if((rats[i].x >= side/4  && rats[i].x < right) && (rats[i].y > bottom && rats[i].y <= -side/4)) rats_per[15]++;
+			for (int j=0; j<granularity; j++)
+			{
+				for (int k=0; k<granularity; k++)
+				{
+					if ((rats[i].x >= k*side/granularity - side/2 && rats[i].x <= (k+1)*side/granularity - side/2) &&
+							(rats[i].y >= -(j+1)*side/granularity + side/2 && rats[i].y <= -j*side/granularity + side/2))
+						rats_per[j*granularity+k]++;
+				}
+			}
 		}
 		return rats_per;
 	}
 	
-	private double[] calculatePiperDist(Point[] rats, Point[][] pipers, int p)
+	private double[] calculatePiperDist(Point[] rats, Point[][] pipers, int p, int granularity)
 	{
-		double dist[] = new double[16];
-		double center = 0;
-		double left = -side / 2;
-		double bottom = left;
-		double right = side / 2;
-		double top = right;
-		dist[0] = Math.sqrt(Math.pow(pipers[id][p].x+side*3/8, 2) + Math.pow(pipers[id][p].y-side*3/8, 2));
-		dist[1] = Math.sqrt(Math.pow(pipers[id][p].x+side*1/8, 2) + Math.pow(pipers[id][p].y-side*3/8, 2));
-		dist[2] = Math.sqrt(Math.pow(pipers[id][p].x-side*3/8, 2) + Math.pow(pipers[id][p].y-side*3/8, 2));
-		dist[3] = Math.sqrt(Math.pow(pipers[id][p].x-side*3/8, 2) + Math.pow(pipers[id][p].y-side*3/8, 2));
-		
-		dist[4] = Math.sqrt(Math.pow(pipers[id][p].x+side*3/8, 2) + Math.pow(pipers[id][p].y-side*1/8, 2));
-		dist[5] = Math.sqrt(Math.pow(pipers[id][p].x+side*1/8, 2) + Math.pow(pipers[id][p].y-side*1/8, 2));
-		dist[6] = Math.sqrt(Math.pow(pipers[id][p].x-side*3/8, 2) + Math.pow(pipers[id][p].y-side*1/8, 2));
-		dist[7] = Math.sqrt(Math.pow(pipers[id][p].x-side*3/8, 2) + Math.pow(pipers[id][p].y-side*1/8, 2));
-		
-		dist[8] = Math.sqrt(Math.pow(pipers[id][p].x+side*3/8, 2) + Math.pow(pipers[id][p].y+side*1/8, 2));
-		dist[9] = Math.sqrt(Math.pow(pipers[id][p].x+side*1/8, 2) + Math.pow(pipers[id][p].y+side*1/8, 2));
-		dist[10] = Math.sqrt(Math.pow(pipers[id][p].x-side*3/8, 2) + Math.pow(pipers[id][p].y+side*1/8, 2));
-		dist[11] = Math.sqrt(Math.pow(pipers[id][p].x-side*3/8, 2) + Math.pow(pipers[id][p].y+side*1/8, 2));
-		
-		dist[12] = Math.sqrt(Math.pow(pipers[id][p].x+side*3/8, 2) + Math.pow(pipers[id][p].y+side*3/8, 2));
-		dist[13] = Math.sqrt(Math.pow(pipers[id][p].x+side*1/8, 2) + Math.pow(pipers[id][p].y+side*3/8, 2));
-		dist[14] = Math.sqrt(Math.pow(pipers[id][p].x-side*3/8, 2) + Math.pow(pipers[id][p].y+side*3/8, 2));
-		dist[15] = Math.sqrt(Math.pow(pipers[id][p].x-side*3/8, 2) + Math.pow(pipers[id][p].y+side*3/8, 2));
+		double dist[] = new double[granularity*granularity];
+		for (int i=0; i<granularity; i++)
+		{
+			for (int j=0; j<granularity; j++)
+			{
+				Point centerofCell = new Point(granularity*j*side - 3*side/8, -granularity*i*side + 3*side/8);
+				dist[i*granularity+j] = getDistance(pipers[id][p], centerofCell);
+			}
+		}
 		return dist;
 	}
 	
@@ -418,7 +387,7 @@ public class Player implements pppp.sim.Player {
 	// return next locations on last argument
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
-	{	
+	{	int granularity = 4;
 		if (rats.length > 10)
 		{
 			initSweepPosition(rats, pipers);
@@ -459,20 +428,27 @@ public class Player implements pppp.sim.Player {
 						{
 							count = 0;
 							flag = true;
-							int rats_per[] = findNofRats(rats);
-							double dist[] = calculatePiperDist(rats, pipers, p);
-							double ratio[] = new double[16];
-							for(int i=0; i<16; i++)
-								ratio[i] = rats_per[i] / dist[i];
+							int rats_per[] = findNofRats(rats, granularity);
+							double dist[] = calculatePiperDist(rats, pipers, p, granularity);
+							double ratio[] = new double[granularity*granularity];
+							for(int i=0; i<granularity*granularity; i++)
+									ratio[i] = rats_per[i] / dist[i];
 							int largest_ind_temp = 0;
 							double largest_ratio = ratio[0];
-							for(int i=1; i<16; i++)
+							for(int i=1; i<granularity*granularity; i++)
 								if (largest_ratio < ratio[i])
 									{
 									largest_ratio = ratio[i];
 									largest_ind_temp = i;
 									}
 							Random random = new Random();
+							int row, col;
+							row = largest_ind_temp / granularity;
+							col = largest_ind_temp - row * granularity;
+							//set pos[p][1] to be a random place within the largest rats/distance ratio area
+							pos[p][1] = new Point(col*side/granularity-side/2 + (side/granularity)*random.nextDouble(), 
+									-(row+1)*side/granularity + (side/granularity)*random.nextDouble());
+							/*
 							if (largest_ind_temp == 0)
 							{
 								Point temp = new Point(random.nextDouble() * .25 * side - side/2, random.nextDouble() * .25 * side - side/4);
@@ -553,6 +529,7 @@ public class Player implements pppp.sim.Player {
 								Point temp = new Point(random.nextDouble() * .25 * side + side/4, random.nextDouble() * .25 * side - side/2);
 								pos[p][1] = temp;
 							}	
+							*/
 						}
 					}
 					if (pos_index[p] == 3)
@@ -585,8 +562,8 @@ public class Player implements pppp.sim.Player {
 				Point src = pipers[id][p];
 				Point dst = pos[p][pos_index[p]];
 				boolean flag = false;
-				int rats_per[] = findNofRats(rats);
-				double dist[] = calculatePiperDist(rats, pipers, p);
+				int rats_per[] = findNofRats(rats, granularity);
+				double dist[] = calculatePiperDist(rats, pipers, p, granularity);
 				double ratio[] = new double[16];
 				for(int i=0; i<16; i++)
 					ratio[i] = rats_per[i] / dist[i];
