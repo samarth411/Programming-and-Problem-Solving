@@ -492,7 +492,13 @@ public class Player implements pppp.sim.Player {
 						{
 							Point temp = new Point(random.nextDouble() * .25 * side + side/4, random.nextDouble() * .25 * side - side/2);
 							pos[p][1] = temp;
-						}	
+						}
+						
+						if(!pipers_clustered)
+		 				{
+		 					pos[p][2] = next[p];
+		 				}
+		 				
 					}
 				}
 				if (pos_index[p] == 3)
