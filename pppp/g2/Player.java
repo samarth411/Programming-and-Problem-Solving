@@ -24,7 +24,7 @@ public class Player implements pppp.sim.Player {
 	
 	private int count = 0;
 	
-	
+	 
 	
 
 	// create move towards specified destination
