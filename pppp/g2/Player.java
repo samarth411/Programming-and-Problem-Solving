@@ -1,4 +1,4 @@
-package pppp.g2;
+package pppp.g0;
 
 import pppp.sim.Point;
 import pppp.sim.Move;
@@ -33,6 +33,9 @@ public class Player implements pppp.sim.Player {
 	private int count = 0;
 	private int granularity = 4;
 	private int[] largest_ind;
+	private boolean flag_decided;
+	private int rat_ind;
+	private int piper_ind;
 	
 	
 	
@@ -46,7 +49,7 @@ public class Player implements pppp.sim.Player {
 			
 	private Point[] nearest_neighbor(Point[][] pipers)		
 	{		
-		double radius = 5.0; //radius at which pipers considered part of the same cluser		
+		double radius = 1.0; //radius at which pipers considered part of the same cluster		
 							//EXPERIMENT with value		
 		//keeps track of which pipers still need a nearest neighbor assignment		
 		Point[] neighbors = new Point[pipers[id].length];		
@@ -117,9 +120,35 @@ public class Player implements pppp.sim.Player {
 			pipers_remaining.remove(neighbor);		
 		}		
 		return neighbors;		
-	}		
+	}
+	
+	//Actually not returning a position, but two indices. x: piper which is nearest to a rat, y: which rat is it.
+	private Point find_nearest_rat(Point[] rats, Point[][] pipers)
+	{
+		double least_dist = 100000;
+		int rat_ind= 0;
+		int piper_ind = 0;
+		for (int i=0; i<pipers.length; i++)
+		{
+			double least_dist_temp = distance(pipers[id][i], rats[0]);
+			int rat_ind_temp = 0;
+			for (int j=1; j<rats.length; j++)
+			{
+				double dist = distance(pipers[id][i], rats[j]);
+				least_dist_temp = least_dist_temp<dist ? least_dist : dist;
+				rat_ind_temp = least_dist_temp<dist ? j : rat_ind_temp;
+			}
+			if (least_dist_temp < least_dist)
+			{
+				least_dist = least_dist_temp;
+				piper_ind = i;
+				rat_ind = rat_ind_temp;
+			}
+		}
+		return new Point(piper_ind, rat_ind);
+	}
 		
-	//return true if all pipers within a certain radius of eachother		
+	//return true if all pipers within a certain radius of each other		
 	//shoudl check before checking for nearest neighbors		
 	private boolean pipers_together(double radius, Point[][] pipers)		
 	{		
@@ -197,7 +226,7 @@ public class Player implements pppp.sim.Player {
 		largest_ind = new int[pipers[id].length];
 		for (int i=0; i<pipers[id].length; i++)
 			largest_ind[i] = 0;
-		
+		flag_decided = false;
 		
 		blowPiper = new boolean[n_pipers];
 		pos = new Point [n_pipers][5];
@@ -512,7 +541,7 @@ public class Player implements pppp.sim.Player {
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
 	{	
-		if (rats.length > 5)
+		if (rats.length > 100)
 		{
 			initSweepPosition(rats, pipers);
 			playCount++;
@@ -617,81 +646,70 @@ public class Player implements pppp.sim.Player {
 			}
 		}
 		
-		else
-		{
-			boolean pipers_clustered = pipers_together(5,pipers);		
-			Point[] next;	
-			if(!pipers_clustered)		
-			{		
-			 	next = nearest_neighbor(pipers);		
-			}		
-			 else		
-			 {		
-				 next = null;		
-			 }
-			
+		if (rats.length <= 6)
+		{		
+			boolean pipers_clustered = pipers_together(1,pipers);		
+			if (!flag_decided)
+			{
+				 Point pr = find_nearest_rat(rats, pipers);
+				 piper_ind = (int)pr.x;
+				 rat_ind = (int)pr.y;
+			}
+
 			
 			for (int p = 0 ; p != pipers[id].length ; ++p) {
 				Point src = pipers[id][p];
 				Point dst = pos[p][pos_index[p]];
-				boolean flag = false;
-				boolean flag_rats = false;
-				for (int i=0; i<rats.length; i++)
-					if (getDistance(pipers[id][p], rats[i]) <= 10) flag_rats = true;
-				if (!flag_rats && pos_index[p] == 2)
-				{
-					pos_index[p] = 1;
-				}
-				int rats_per[] = findNofRats(rats, granularity);
-				double dist[] = calculatePiperDist(rats, pipers, p, granularity);
-				double ratio[] = new double[granularity*granularity];
-				for(int i=0; i<granularity*granularity; i++)
-					ratio[i] = rats_per[i] / dist[i];
-				int largest_ind_temp = 0;
-				double largest_ratio = ratio[0];
-				for(int i=1; i<granularity*granularity; i++)
-					if (largest_ratio < ratio[i])
-						{
-						largest_ratio = ratio[i];
-						largest_ind_temp = i;
-						}
-				if (largest_ind_temp != largest_ind[p])
-				{
-				Random random = new Random();
-				int row, col;
-				row = largest_ind_temp / granularity;
-				col = largest_ind_temp - row * granularity;
-				//set pos[p][1] to be a random place within the largest rats/distance ratio area
-				pos[p][1] = new Point(col*side/granularity-side/2 + (side/granularity)*random.nextDouble(), 
-						-(row+1)*side/granularity + (side/granularity)*random.nextDouble());
-				largest_ind[p] = largest_ind_temp;
-				}
-				
-				if(!pipers_clustered)		
-				{		
-					pos[p][2] = next[p];		
-				}
-				
-				
 				// if null then get random position
 				if (dst == null) dst = random_pos[p];
+				// if null then get random position
+				if (dst == null) dst = random_pos[p];
+				
+				boolean flag_rat = false;
+				for (int i=0; i<rats.length; i++)
+					if (distance(rats[i], pipers[id][p]) <= 5)
+					{
+						flag_rat = true;
+						break;
+					}
+				if (p != piper_ind && (pos_index[p] == 1|| pos_index[p] == 2) && !pipers_clustered)
+				{
+					dst = pipers[id][piper_ind];
+				}
+				if (p == piper_ind && (pos_index[p] == 1|| pos_index[p] == 2) && !pipers_clustered)
+				{
+					dst = rats[rat_ind];
+				}
+				if ((pos_index[p] == 1|| (pos_index[p] == 2 )) && pipers_clustered)
+					dst = rats[rat_ind];
+				if (!flag_rat && (pos_index[p] == 2 || pos_index[p] == 3))
+				{
+					pos_index[p] = 2;
+					dst = rats[rat_ind];
+				}
+				if (flag_rat && pos_index[p] == 2 )
+				{
+					dst = pos[p][2];
+				}
+				if (flag_rat && pos_index[p] == 3 )
+				{
+					dst = pos[p][3];
+				}			
+				
 				// if position is reached
-				if (Math.abs(src.x - dst.x) < 0.000001 &&
-				    Math.abs(src.y - dst.y) < 0.000001) {
-					flag = true;
+				if ((Math.abs(src.x - dst.x) < 0.000001 &&
+				    Math.abs(src.y - dst.y) < 0.000001 && pos_index[p] != 1) || distance(src, dst) < 1 && pos_index[p] == 1) {
+					
+
+					if (!flag_rat && pos_index[p] == 1) continue;
+					if (!flag_rat && pos_index[p] == 2) continue;
+					if (pos_index[p] == 0)
+						flag_decided = false;
 					// discard random position
 					if (dst == random_pos[p]) random_pos[p] = null;
-					// get next position
-					if (!flag_rats && pos_index[p] == 1)
-					{
-						int a=0;
-					}
-					else
-					{
-						if (++pos_index[p] == pos[p].length) pos_index[p] = 0;
-					}
-						
+					if (++pos_index[p] == pos[p].length) pos_index[p] = 0;
 					dst = pos[p][pos_index[p]];
+
 					// generate a new position if random
 					if (dst == null) {
 						double x = (gen.nextDouble() - 0.5) * side * 0.9;
@@ -700,7 +718,7 @@ public class Player implements pppp.sim.Player {
 					}
 				}
 				// get move towards position
-				moves[p] = move(src, dst, pos_index[p] > 1);
+				moves[p] = move(src, dst, pos_index[p] > 1 && flag_rat);
 			}
 		
 		}
