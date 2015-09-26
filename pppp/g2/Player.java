@@ -1,6 +1,7 @@
 package pppp.g0;
 
 import pppp.sim.Point;
+import pppp.g0.two_tuple;
 import pppp.sim.Move;
 
 import java.util.*;
@@ -122,8 +123,8 @@ public class Player implements pppp.sim.Player {
 		return neighbors;		
 	}
 	
-	//Actually not returning a position, but two indices. x: piper which is nearest to a rat, y: which rat is it.
-	private Point find_nearest_rat(Point[] rats, Point[][] pipers)
+	//piper_ind: piper which is nearest to a rat, rat_ind: which rat is it.
+	private two_tuple find_nearest_rat(Point[] rats, Point[][] pipers)
 	{
 		double least_dist = 100000;
 		int rat_ind= 0;
@@ -135,8 +136,11 @@ public class Player implements pppp.sim.Player {
 			for (int j=1; j<rats.length; j++)
 			{
 				double dist = distance(pipers[id][i], rats[j]);
-				least_dist_temp = least_dist_temp<dist ? least_dist : dist;
-				rat_ind_temp = least_dist_temp<dist ? j : rat_ind_temp;
+				if (least_dist_temp<dist)
+				{
+					least_dist_temp = least_dist;
+					rat_ind_temp = j;
+				}
 			}
 			if (least_dist_temp < least_dist)
 			{
@@ -145,7 +149,7 @@ public class Player implements pppp.sim.Player {
 				rat_ind = rat_ind_temp;
 			}
 		}
-		return new Point(piper_ind, rat_ind);
+		return new two_tuple(piper_ind, rat_ind);
 	}
 		
 	//return true if all pipers within a certain radius of each other		
@@ -541,7 +545,7 @@ public class Player implements pppp.sim.Player {
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
 	{	
-		if (rats.length > 100)
+		if (rats.length >= 100)
 		{
 			initSweepPosition(rats, pipers);
 			playCount++;
@@ -651,9 +655,9 @@ public class Player implements pppp.sim.Player {
 			boolean pipers_clustered = pipers_together(1,pipers);		
 			if (!flag_decided)
 			{
-				 Point pr = find_nearest_rat(rats, pipers);
-				 piper_ind = (int)pr.x;
-				 rat_ind = (int)pr.y;
+				two_tuple pr = find_nearest_rat(rats, pipers);
+				 piper_ind = pr.a;
+				 rat_ind = pr.b;
 			}
 
 			
