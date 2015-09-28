@@ -1,4 +1,4 @@
-package pppp.g0;
+package pppp.g8;
 
 import pppp.sim.Point;
 import pppp.sim.Move;
