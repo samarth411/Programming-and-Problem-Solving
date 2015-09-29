@@ -809,7 +809,7 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 		double least_dist = 100000;
 		int rat_ind= 0;
 		int piper_ind = 0;
-		for (int i=0; i<pipers.length; i++)
+		for (int i=0; i<pipers[id].length; i++)
 		{
 			double least_dist_temp = distance(pipers[id][i], rats[0]);
 			int rat_ind_temp = 0;
