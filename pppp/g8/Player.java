@@ -1,4 +1,4 @@
-package pppp.g8;
+package pppp.g0;
 
 import pppp.sim.Point;
 
@@ -579,14 +579,9 @@ public class Player implements pppp.sim.Player {
 	private int[] findnumofSamePipers(Point[][] Pipers, int granularity)
 	{
 		int pipers_per[][] = new int[4][granularity*granularity];
-		for (int i=0; i<granularity; i++)
-		{
-			for(int j=0; j<4; ++j)
-				{pipers_per[i][j] = 0;
-				}
-		}
 		for (int i=0; i<Pipers.length; i++)
 		{
+			if(i==id){continue;}
 			for(int m=0; m<Pipers[i].length; m++)
 			{
 				for (int j=0; j<granularity; j++)
@@ -595,7 +590,7 @@ public class Player implements pppp.sim.Player {
 					{
 						if ((Pipers[i][m].x >= k*side/granularity - side/2 && Pipers[i][m].x <= (k+1)*side/granularity - side/2) &&
 								(Pipers[i][m].y >= -(j+1)*side/granularity + side/2 && Pipers[i][m].y <= -j*side/granularity + side/2))
-									pipers_per[m][j*granularity+k]++;
+									pipers_per[i][j*granularity+k]++;
 					}
 				}
 			}
@@ -1043,6 +1038,7 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
 	{
+		try{
 		if (pipers[id].length == 1)
 		{
 			playOnePiper(pipers, pipers_played, rats, moves);
@@ -1060,6 +1056,9 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 		{
 			play2(pipers, pipers_played, rats, moves);
 		}
+		}
+		catch(Exception e)
+		{e.printStackTrace();}
 		
 	}
 	
