@@ -38,12 +38,13 @@ public class Player implements pppp.sim.Player {
 	private boolean flag_decided;
 	private int rat_ind;
 	private int piper_ind;
+	private boolean onepiperCount;
 	
 	
 	private int[] pos_index_prev = null;
 	
 	
-	private two_tuple xx;
+	
 	
 			
 				
@@ -227,6 +228,7 @@ public class Player implements pppp.sim.Player {
 		pos_index = new int [n_pipers];
 		flag_decided = false;
 		initialrats = rats.length;
+		onepiperCount = false;
 		
 		pos_index_prev = new int [n_pipers];
 		
@@ -854,7 +856,7 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 				
 				if (distance <= 10)
 				{
-					distRat.distance = 5000;
+					distRat.distance = Double.MAX_VALUE;
 				}
 				for (int i = 0; i<4; i++)
 				{
@@ -862,17 +864,43 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 					{
 						double dist = getDistance(pipers[i][0], rats[j]);
 						if (dist <= 10)
-							distRat.distance = 100;
+							distRat.distance = Double.MAX_VALUE;
 					}
 				}
+				if (!onepiperCount)
+				{
+					
+					switch(id)
+					{
+					case 0:
+						if (rats[j].y < 0)
+							distRat.distance = Double.MAX_VALUE;
+						break;
+					case 1:
+						if (rats[j].x < 0)
+							distRat.distance = Double.MAX_VALUE;
+						break;
+					case 2:
+						if (rats[j].y > 0)
+							distRat.distance = Double.MAX_VALUE;
+						break;
+					case 3:
+						if (rats[j].x > 0)
+							distRat.distance = Double.MAX_VALUE;
+						break;
+					}
+				}
+				
 				distRats[j] = distRat;
 			}
 			Arrays.sort(distRats, new DistanceComparator());
 			pos[0][1] = rats[distRats[0].ratId];
-
+			if (distRats[0].distance == Double.MAX_VALUE)
+				pos_index[0] = 2;
 			}
 			if (pos_index[0] == 2 && rats_num == 0)
 				pos_index[0] = 1;
+			
 			
 			Point src = pipers[id][0];
 			Point dst = pos[0][pos_index[0]];
@@ -893,6 +921,8 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 					
 				}*/
 				//else
+				if (pos_index[0] == 2)
+					onepiperCount = true;
 				{
 					if (++pos_index[0] == pos[0].length) pos_index[0] = 0;
 				}
