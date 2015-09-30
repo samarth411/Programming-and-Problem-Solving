@@ -1062,6 +1062,200 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 		
 	}
 	
+	private void medium_sparsity_case(Point[][] pipers, boolean[][] pipers_played,
+            Point[] rats, Move[] moves)
+	{
+		int granularity = 4;
+		int n_pipers = pipers[0].length;
+		boolean pipers_clustered = pipers_together(5,pipers);		
+		Point[] next;	
+		if(!pipers_clustered)		
+		{		
+			next = nearest_neighbor(pipers);		
+		}		
+		else		
+		{		
+			next = null;		
+		}
+	
+		boolean attack = false;
+		Point target = null;
+		//int attack_num=0;
+		
+		
+		for(int p=0; p<pipers[id].length; ++p)
+		{
+			double door = 0.0;
+			if (n_pipers != 1) door = -0.95;
+			boolean neg_y = id == 2 || id == 3;
+			boolean swap  = id == 1 || id == 3;
+			double xCoordinate = 0.0;
+			double yCoordinate = 0.0;		
+			xCoordinate = (p * 0.4 / (n_pipers - 1) - 0.2) * side;
+			yCoordinate = 0.05*side;
+			pos[p][0] = point(door, side * 0.5, neg_y, swap); //at door
+			pos[p][3] = point(0, 0.45*side, neg_y, swap); //at door
+			pos[p][4] = point(0, side * 0.5 + 8, neg_y, swap); //in gate
+			//Point pos1 = point(xCoordinate, yCoordinate, neg_y, swap);
+			pos[p][2] = point(0, 0.45*side, neg_y, swap);
+		}
+		
+		//check competitors
+		ArrayList<Competitor> comps = findCompetitors(pipers, rats, pipers_played);
+		
+		for (int p = 0 ; p != pipers[id].length ; ++p) {
+			Point src = pipers[id][p];
+
+			//check if piper has rats
+			boolean flag = false;
+			boolean flag_rats = false;
+			for (int i=0; i<rats.length; i++)
+			{
+				if (getDistance(pipers[id][p], rats[i]) <= 10) 
+				{
+					flag_rats = true;
+					break;
+				}
+			}
+			
+			//if doesn't contain rats, don't go back to gate, set current position to 1
+/*			if (!flag_rats && pos_index[p] == 2)//???
+			{
+				System.out.println(String.valueOf(id) + " team and player" + String.valueOf(p) + " has no rats");
+				pos_index[p] = 1;
+				pos[p][1]=null;
+				//pos[p][2]=null;
+			}
+*/			
+
+			if(pos_index[p] == 1 && !attack)
+			{
+				System.out.println("index 1 and attack false: checking for competitors.");
+				int max_rats = 0;
+				Competitor max_comp = null;
+				for(int i=0; i<comps.size(); ++i)
+				{
+					Competitor c = comps.get(i);
+					Point destination = getmin(c);
+					if(!(getDistance(src, destination) < 5*distance_playing_to_gate(destination, c.team)))
+					{
+						if(c.rats>max_rats)
+						{
+							max_rats = c.rats;
+							max_comp = c;
+						}
+					}
+				}
+
+				if(max_rats>=rats.length/3 && max_comp!=null)
+				{
+					if(target!=null && target.y<side/2 && target.y>-side/2 && target.x>-side/2 && target.x<side/2)
+					{
+						attack = true;
+						target = max_comp.locations.get(0);
+						//attack_num = max_comp.num_pipers;
+						pos[p][1] = target;
+					}
+				}
+
+			}
+			else if(pos_index[p]==1 && attack && target!=null) //&& attack_num>0)
+			{
+				System.out.println("position is 1 and attack is true: setting my target.");
+				pos[p][1] = target;
+				//--attack_num;
+				//if(attack_num==0)
+				//{
+				//	attack = false;
+				//}
+			}
+
+			if(pos[p][1]==null)//((!attack || attack_num<=0) && pos_index[p]==1)
+			{
+				System.out.println("attack is false, and position is 1: looking for densest area");
+				int rats_per[] = findNofRats(rats, granularity);
+				double dist[] = calculatePiperDist(rats, pipers, p, granularity);
+				int pipers_per[] = findnumofSamePipers(pipers, granularity);
+				double ratio[] = new double[granularity*granularity];
+				for(int i=0; i<granularity*granularity; i++)
+					{
+						double mult;
+						if(pipers_per[i]==0) mult = pipers_per[i];
+						else mult = 0.9;
+						ratio[i] = rats_per[i] / (dist[i]*mult);
+					}
+				int largest_ind_temp = 0;
+				double largest_ratio = ratio[0];
+				for(int i=1; i<granularity*granularity; i++)
+				{
+					if (largest_ratio < ratio[i])
+					{
+						largest_ratio = ratio[i];
+						largest_ind_temp = i;
+					}
+				}
+//				if (largest_ind_temp != largest_ind[p])
+//				{
+					Random random = new Random();
+					int row, col;
+					row = largest_ind_temp / granularity;
+					col = largest_ind_temp - row * granularity;
+					//set pos[p][1] to be a random place within the largest rats/distance ratio area
+					pos[p][1] = new Point(col*side/granularity-side/2 + (side/granularity)*random.nextDouble(), 
+						-(row+1)*side/granularity + (side/granularity)*random.nextDouble());
+					largest_ind[p] = largest_ind_temp;
+//				}
+			}
+		
+			if(!pipers_clustered && next[p]!=null)		
+			{		
+				pos[p][2] = next[p];		
+			}
+		
+			src = pipers[id][p];
+			Point dst = pos[p][pos_index[p]];
+			
+			// if null then get random position
+			if (dst == null) 
+				{
+					dst = random_pos[p];
+					//double x = (gen.nextDouble() - 0.5) * side * 0.9;
+					//double y = (gen.nextDouble() - 0.5) * side * 0.9;
+					//random_pos[p] = dst = new Point(x, y);
+				}
+			// if position is reached
+			if (Math.abs(src.x - dst.x) < 0.000001 &&
+					Math.abs(src.y - dst.y) < 0.000001) {
+				flag = true;
+				// discard random position
+				if (dst == random_pos[p]) random_pos[p] = null;
+				// get next position
+//				if (!flag_rats && pos_index[p] == 1)//???????????????
+//				{
+//					int a=0;
+//				}
+//				else
+//				{
+					if (++pos_index[p] == pos[p].length) 
+					{
+						pos_index[p] = 0;
+					}
+//				}
+				
+				dst = pos[p][pos_index[p]];
+				// generate a new position if random
+				if (dst == null) {
+					System.out.println("TAKING RANDOM STEP");
+					double x = (gen.nextDouble() - 0.5) * side * 0.9;
+					double y = (gen.nextDouble() - 0.5) * side * 0.9;
+					random_pos[p] = dst = new Point(x, y);
+				}
+			}
+			// get move towards position
+			moves[p] = move(src, dst, pos_index[p] > 1);
+		}
+	}
+
 	
 	private void initSweepPosition2(Point[] rats, Point[][] pipers)
 	{
@@ -1353,167 +1547,11 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 		}
 		else if (rats.length > 7) //medium sparsity case
 		{
-			
-			boolean pipers_clustered = pipers_together(5,pipers);		
-			Point[] next;	
-			if(!pipers_clustered)		
-			{		
-			 	next = nearest_neighbor(pipers);		
-			}		
-			 else		
-			 {		
-				 next = null;		
-			 }
-			
-			boolean attack = false;
-			Point target = null;
-			boolean attack_in_progress = false;
-			for (int p = 0 ; p != pipers[id].length ; ++p) {
-				Point src = pipers[id][p];
-				Point dst = pos[p][pos_index[p]];
-				boolean flag = false;
-				boolean flag_rats = false;
-				for (int i=0; i<rats.length; i++)
-				{
-					if (getDistance(pipers[id][p], rats[i]) <= 10) 
-					{
-						flag_rats = true;
-						break;
-					}
-				}
-				if (!flag_rats && pos_index[p] == 2)
-				{
-					pos_index[p] = 1;
-				}
-				//check competitors
-				ArrayList<Competitor> comps = findCompetitors(pipers, rats, pipers_played);
-
-				if(!attack_in_progress && !attack && !flag_rats)
-				{
-					int max_rats = 0;
-					Competitor max_comp = null;
-					for(int i=0; i<comps.size(); ++i)
-					{
-						Competitor c = comps.get(i);
-						Point destination = getmin(c);
-						if(!(getDistance(src, destination) < 5*distance_playing_to_gate(destination, c.team)))
-						{
-							if(c.rats>max_rats)
-							{
-								max_rats = c.rats;
-								max_comp = c;
-							}
-						}
-					}
-
-					if(max_rats>=rats.length/3 && max_comp!=null)
-					{
-						if(target!=null && target.y<side/2 && target.y>-side/2 && target.x>-side/2 && target.x<side/2)
-						{
-							attack = true;
-							attack_in_progress = true;
-							target = max_comp.locations.get(0);
-							pos[p][1] = target;
-						}
-					}
-
-				}
-				if(attack && attack_in_progress && target!=null)
-				{
-					pos[p][1] = target;
-					if(p==pipers[id].length-1)
-					{
-						attack = false;
-					}
-				}
-
-				if(!attack_in_progress)
-				{
-					int rats_per[] = findNofRats(rats, granularity);
-					double dist[] = calculatePiperDist(rats, pipers, p, granularity);
-					int pipers_per[] = findnumofSamePipers(pipers, granularity);
-					double ratio[] = new double[granularity*granularity];
-					for(int i=0; i<granularity*granularity; i++)
-						{
-							double mult;
-							if(pipers_per[i]==0) mult = pipers_per[i];
-							else mult = 0.9;
-							ratio[i] = rats_per[i] / (dist[i]*mult);
-						}
-					int largest_ind_temp = 0;
-					double largest_ratio = ratio[0];
-					for(int i=1; i<granularity*granularity; i++)
-					{
-						if (largest_ratio < ratio[i])
-							{
-							largest_ratio = ratio[i];
-							largest_ind_temp = i;
-							}
-					}
-					if (largest_ind_temp != largest_ind[p])
-					{
-						Random random = new Random();
-						int row, col;
-						row = largest_ind_temp / granularity;
-						col = largest_ind_temp - row * granularity;
-						//set pos[p][1] to be a random place within the largest rats/distance ratio area
-						pos[p][1] = new Point(col*side/granularity-side/2 + (side/granularity)*random.nextDouble(), 
-								-(row+1)*side/granularity + (side/granularity)*random.nextDouble());
-						largest_ind[p] = largest_ind_temp;
-					}
-				}
-				
-				if(!pipers_clustered && next[p]!=null)		
-				{		
-					pos[p][2] = next[p];		
-				}
-				
-				
-				// if null then get random position
-				if (dst == null) 
-					{dst = random_pos[p];
-					//double x = (gen.nextDouble() - 0.5) * side * 0.9;
-					//double y = (gen.nextDouble() - 0.5) * side * 0.9;
-					//random_pos[p] = dst = new Point(x, y);
-					attack_in_progress = false;
-					}
-				// if position is reached
-				if (Math.abs(src.x - dst.x) < 0.000001 &&
-				    Math.abs(src.y - dst.y) < 0.000001) {
-					flag = true;
-					// discard random position
-					if (dst == random_pos[p]) random_pos[p] = null;
-					// get next position
-					if (!flag_rats && pos_index[p] == 1)
-					{
-						int a=0;
-					}
-					else
-					{
-						if (++pos_index[p] == pos[p].length) 
-							{
-								pos_index[p] = 0;
-								attack_in_progress = false;
-							}
-					}
-						
-					dst = pos[p][pos_index[p]];
-					// generate a new position if random
-					if (dst == null) {
-						double x = (gen.nextDouble() - 0.5) * side * 0.9;
-						double y = (gen.nextDouble() - 0.5) * side * 0.9;
-						random_pos[p] = dst = new Point(x, y);
-					}
-					if(pos_index[p] != 1) {attack_in_progress = false;}
-				}
-				// get move towards position
-				moves[p] = move(src, dst, pos_index[p] > 1);
-			}
-		
-		
+			medium_sparsity_case(pipers, pipers_played, rats, moves);
 		}
 		else //sparse case
 		{
+			System.out.println("SPARSE CASE");
 			//playOnePiper(pipers, pipers_played, rats, moves);
 			
 			boolean pipers_clustered = pipers_together(1,pipers);		
