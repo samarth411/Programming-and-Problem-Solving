@@ -1130,7 +1130,7 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 
 			if(pos_index[p] == 1 && !attack)
 			{
-				System.out.println("index 1 and attack false: checking for competitors.");
+				//System.out.println("index 1 and attack false: checking for competitors.");
 				int max_rats = 0;
 				Competitor max_comp = null;
 				for(int i=0; i<comps.size(); ++i)
@@ -1161,7 +1161,7 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 			}
 			else if(pos_index[p]==1 && attack && target!=null) //&& attack_num>0)
 			{
-				System.out.println("position is 1 and attack is true: setting my target.");
+				//System.out.println("position is 1 and attack is true: setting my target.");
 				pos[p][1] = target;
 				//--attack_num;
 				//if(attack_num==0)
@@ -1172,7 +1172,7 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 
 			if(pos[p][1]==null)//((!attack || attack_num<=0) && pos_index[p]==1)
 			{
-				System.out.println("attack is false, and position is 1: looking for densest area");
+				//System.out.println("attack is false, and position is 1: looking for densest area");
 				int rats_per[] = findNofRats(rats, granularity);
 				double dist[] = calculatePiperDist(rats, pipers, p, granularity);
 				int pipers_per[] = findnumofSamePipers(pipers, granularity);
@@ -1245,7 +1245,7 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 				dst = pos[p][pos_index[p]];
 				// generate a new position if random
 				if (dst == null) {
-					System.out.println("TAKING RANDOM STEP");
+					//System.out.println("TAKING RANDOM STEP");
 					double x = (gen.nextDouble() - 0.5) * side * 0.9;
 					double y = (gen.nextDouble() - 0.5) * side * 0.9;
 					random_pos[p] = dst = new Point(x, y);
@@ -1551,7 +1551,7 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 		}
 		else //sparse case
 		{
-			System.out.println("SPARSE CASE");
+			//System.out.println("SPARSE CASE");
 			//playOnePiper(pipers, pipers_played, rats, moves);
 			
 			boolean pipers_clustered = pipers_together(1,pipers);		
