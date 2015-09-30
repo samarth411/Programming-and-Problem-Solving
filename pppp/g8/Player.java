@@ -1256,30 +1256,33 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 		}
 	}
 
-	
 	private void initSweepPosition2(Point[] rats, Point[][] pipers)
 	{
-		boolean neg_y = id == 2 || id == 3;
-		boolean swap  = id == 1 || id == 3;
+		int angleEachPiper = (140/(pipers[0].length) -2 );
+		double xPositive = 0.50*side-10;
+		double yPositive = 0.5*side-10;
+		double xNegative = -(0.50*side-10);
+		double yNegative = 0.5*side-10;
 		
-		for (int p = 0 ; p != pipers[id].length ; ++p) {
-			if (p%4 == 0)
+		for (int p = 0 ; p != pipers[id].length ; ++p) 
+		{
+			double x, y;
+			int angle = angleEachPiper*(p/2);
+			if (p%2 == 0)
 			{
-				pos[p][1] = point(0.45*side-10, 0.5*side-10, neg_y, swap);
+				x = xPositive * Math.cos(Math.toRadians(angle));
+				y = yPositive - yPositive * Math.sin(Math.toRadians(angle));
 			}
-			if (p%4 == 1)
+			else
 			{
-				pos[p][1] = point(-0.20*side, 0.10*side, neg_y, swap);
+				x = xNegative * Math.cos(Math.toRadians(angle));
+				y = yNegative - yNegative * Math.sin(Math.toRadians(angle));
 			}
-			if (p%4 ==2)
-			{
-				pos[p][1] = point(0.20*side, 0.10*side, neg_y, swap);
-			}
-			if (p%4 ==3)
-			{
-				pos[p][1] = point(-(0.45*side-10),  0.5*side-10, neg_y, swap);
-			}
-		}		
+			boolean neg_y = id == 2 || id == 3;
+			boolean swap  = id == 1 || id == 3;
+			
+			pos[p][1] = point(x, y, neg_y, swap);
+		}
 	}
 	
 		
