@@ -884,7 +884,7 @@ private int count_rats(ArrayList<Point> locations, Point[] rats)
 			//pos[0][1] = rats[0];
 			// if position is reached
 			if ((Math.abs(src.x - dst.x) < 0.000001 &&
-			    Math.abs(src.y - dst.y) < 0.000001) || (rats_num >= 4 && pos_index[0] == 1)) {
+			    Math.abs(src.y - dst.y) < 0.000001) || (rats_num >= initialrats/6 && pos_index[0] == 1)) {
 				// get next position
 				/*
 				if (rats.length >= initialrats / 2 && rats_num <= 4)
